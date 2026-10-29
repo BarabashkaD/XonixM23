@@ -1,0 +1,86 @@
+XonixM23 — Modern C++23
+
+Create a compact, cross-platform terminal territory-capture game named XonixM23. This is a noncommercial C++23 learning and testing project intended for GitHub. Write the implementation independently, with simple original visuals. Do not copy existing game code, disassembly, binaries, or assets. Treat the project name as a working name, not as a claim of trademark clearance or affiliation.
+
+TECHNOLOGY AND STYLE
+- Use ISO C++23, FTXUI, CMake, and Clang. Target native Windows, Linux, and macOS.
+- Set CMAKE_CXX_STANDARD to 23, CMAKE_CXX_STANDARD_REQUIRED to ON, and CMAKE_CXX_EXTENSIONS to OFF.
+- Verify compiler and standard-library support for the features actually used. Document the minimum tested toolchain versions, including any Windows SDK/toolchain requirements.
+- Use modern C++23 techniques freely whenever they improve clarity, compactness, or performance. Do not impose artificial restrictions on templates, concepts, ranges, constexpr, coroutines, or other standard features. Do not use a feature merely to demonstrate it.
+- Keep the code compact, readable, and direct. Minimalism means fewer unnecessary concepts and less boilerplate, not outdated C++ or code-golf.
+- Prioritize performance, responsive controls, and usability. Avoid unnecessary frameworks and dependencies. Pin FTXUI to a verified release or commit.
+
+GAMEPLAY
+- Start with player-name entry.
+- Use a rectangular grid with a safe border and an unclaimed interior.
+- The player moves with arrow keys or WASD. Moving through unclaimed territory leaves a vulnerable trail.
+- Reconnecting to safe territory completes the trail. Capture the trail and enclosed regions unreachable by any interior enemy. Regions containing enemies remain unclaimed.
+- Enemies move within unclaimed territory and bounce off its boundaries. Contact with the player or unfinished trail costs a life. Crossing the unfinished trail also costs a life.
+- After death, erase the unfinished trail and respawn the player safely without resetting already captured territory.
+- Display the player's name, score, remaining lives, current level, and captured percentage.
+- Reaching the capture threshold advances to the next level, resets the field, and increases difficulty. Preserve the player's name and accumulated score.
+- Losing all lives ends the game and offers a restart.
+- Support pause and quit. Keep rules and controls easy to discover.
+- Choose simple defaults for lives, scoring, capture threshold, speed, and difficulty progression. Centralize these settings so they are easy to adjust, and briefly document them.
+- No unrelated gameplay features, elaborate menus, or persistent storage unless requested.
+
+PLAYING FIELD
+- Use a fixed logical grid, independent of terminal size. Choose and document a practical default width and height.
+- Support optional --width and --height command-line arguments. Validate limits and reject invalid or excessive dimensions with clear messages.
+- Never automatically change the logical board when the terminal is resized. Center it when space permits.
+- If the terminal is too small, pause gameplay, display the required size, and preserve all game state. Do not advance game time while the board cannot be displayed.
+- Keep the status display outside the playing field. Ensure cells are distinguishable without relying on color alone.
+
+IMPLEMENTATION
+- Keep the game simulation separate from terminal rendering, but avoid unnecessary layers and abstractions. A handful of files should be sufficient.
+- Use compact data structures, preferably a contiguous grid, and reuse temporary capture-search storage.
+- Use a fixed simulation timestep and std::chrono::steady_clock. Rendering speed must not change gameplay speed. Avoid busy-waiting and unbounded catch-up after stalls.
+- Keep FTXUI operations and game-state ownership simple and safe. Prefer one thread; if a timer thread is needed, use it only to post wake-up events and shut it down cleanly before destroying the screen.
+- Avoid unnecessary work and allocations in the simulation loop. Measure bottlenecks before optimizing rather than adding speculative complexity.
+- Restore the terminal cleanly on exit.
+
+CHECKS AND DELIVERY
+- Keep tests simple: a small dependency-free CTest executable covering essential capture and collision rules, level transitions, and dimension validation. No elaborate test framework, mocking infrastructure, or exhaustive test matrix.
+- Build and run in the available environment. Perform a short manual smoke test covering name entry, gameplay, level progression, terminal resizing, pause, restart, and exit.
+- Provide Debug and Release builds, sensible warnings, and optional sanitizers where supported.
+- Write a concise README with controls, default rules, dependencies and attribution, and build/run commands for Windows, Linux, and macOS. State which platforms were actually tested and mark untested platforms explicitly.
+- Begin with a short plan and proposed gameplay defaults, then implement in small iterations. Ask only about genuinely blocking ambiguities.
+- Do not publish to GitHub or change global system settings without my approval.
+
+README FORMAT AND HISTORICAL CREDITS
+Create a concise English README.md suitable for the GitHub repository. Use this order:
+
+1. Title and description
+   - Title: XonixM23 — Modern C++23.
+   - A one- or two-sentence description of the game and its noncommercial learning/testing purpose.
+   - One short technology line: C++23, FTXUI, CMake, Clang; Windows, Linux, macOS.
+
+2. Screenshots
+   - Put actual screenshots of the completed game near the top of the README.
+   - Include an overview of active gameplay and, where useful, a second image showing player-name entry or level progression.
+   - Save images under docs/images/ and embed them using relative Markdown links, descriptive alt text, and short captions.
+   - Screenshots must show this project's real running implementation. Do not fabricate screenshots or substitute images from older games. If capture is unavailable, clearly report it as pending rather than claiming screenshots exist.
+   - Keep terminal paths, personal information, and unrelated windows out of screenshots.
+
+3. Quick start and controls
+   - Give short configure, build, and run commands, plus a compact prerequisite note for each supported platform.
+   - Show the default launch and an example using --width and --height.
+   - List movement, pause, restart, and quit controls in a small table.
+   - Explain lives, capture threshold, scoring, and level progression briefly. Avoid a long manual.
+
+4. History and acknowledgments
+   - Include a compact, sourced timeline of the game's historical lineage, not just a generic 'inspired by' sentence. Keep the main product description very short; this section may contain several short paragraphs or bullets.
+   - 1981: Qix, released by Taito for arcades, established the territory-capture premise. Official source: https://www.taito.co.jp/taitomilestones/titles
+   - 1984: DOS Xonix by Ilan Rav and Dani Katz. The Israeli historical account below says they created it during their military service. Sources: https://www.old-games.org/games/xonix and https://www.ynet.co.il/articles/0,7340,L-4368049,00.html
+   - Soviet computing context: Vadim Gerasimov recalls Xonix's popularity at their computing center and in Moscow. He and Dmitry Pavlovsky created Antix/Antixonix, a related variation. Present this as a related historical branch, not as proof that Antix was the direct ancestor of the Radio-86RK version or that Xonix's mechanics directly inspired Tetris. First-person source: https://vadim.oversigma.com/Tetris.htm
+   - 1987: the Radio-86RK archive attributes XONIX-S.RKR to E. Sedov, Moscow. Its listed loaded program length is 2048 bytes. Credit this specific version, not every Radio-86RK adaptation. The archive also lists other versions, including ones labeled MIKRON; do not invent their authors or treat the label as a verified individual author. Source: https://rk86.ru/catalog/
+   - Present XonixM23 as a new, independently written implementation inspired by this territory-capture tradition. Historical attribution does not imply official affiliation, endorsement, permission, or a license from earlier authors.
+   - Verify source links and historical statements before finalizing. Add other individual creator names only when supported by reliable evidence. Distinguish original creators, later adaptation authors, and archive maintainers. Do not invent missing credits or imply this is an exhaustive list of every port.
+   - Mention Sedov only as historical attribution in this documentation, not as an implementation-reference requirement.
+
+5. Dependencies, license, and limitations
+   - Credit FTXUI and link its repository and applicable license: https://github.com/ArthurSonzogni/FTXUI
+   - State the selected license for this project's own code once confirmed; do not imply it covers earlier games or third-party materials.
+   - List actual tested platforms and a short known-limitations note.
+
+Keep the README visually clean and brief. Do not add marketing filler, unsupported performance claims, or badges that do not correspond to working checks.

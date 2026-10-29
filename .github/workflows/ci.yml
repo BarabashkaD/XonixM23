@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            os: ubuntu-24.04
+            preset: release
+            # Ubuntu's default clang++ is 18; libstdc++ is linked statically so the binary runs on more distributions.
+            cmake_args: -DCMAKE_CXX_COMPILER=clang++-19 "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc"
+            package: true
+          - name: linux-x64-sanitize
+            os: ubuntu-24.04
+            preset: sanitize
+            cmake_args: -DCMAKE_CXX_COMPILER=clang++-19
+            package: false
+          - name: windows-x64
+            os: windows-2025
+            preset: release
+            # Static C++ runtime, so the binary needs no Visual C++ redistributable.
+            cmake_args: -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_POLICY_DEFAULT_CMP0091=NEW
+            package: true
+          - name: macos-arm64
+            os: macos-15
+            preset: release
+            cmake_args: ''
+            package: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Clang 19
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-19
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+      - name: Package (Windows)
+        if: matrix.package && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $name = "xonixm23-${{ matrix.name }}"
+          New-Item -ItemType Directory -Force "dist/$name" | Out-Null
+          Copy-Item build/${{ matrix.preset }}/xonixm23.exe, README.md, LICENSE "dist/$name"
+          Compress-Archive -Path "dist/$name" -DestinationPath "$name.zip"
+
+      - name: Package (Linux, macOS)
+        if: matrix.package && runner.os != 'Windows'
+        run: |
+          name="xonixm23-${{ matrix.name }}"
+          mkdir -p "dist/$name"
+          cp build/${{ matrix.preset }}/xonixm23 README.md LICENSE "dist/$name/"
+          tar -C dist -czf "$name.tar.gz" "$name"
+
+      - name: Upload artifact
+        if: matrix.package
+        uses: actions/upload-artifact@v7
+        with:
+          name: xonixm23-${{ matrix.name }}
+          path: xonixm23-${{ matrix.name }}.*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: xonixm23-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "XonixM23 $GITHUB_REF_NAME" --generate-notes
