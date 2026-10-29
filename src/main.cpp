@@ -10,7 +10,6 @@
 #include <mutex>
 #include <optional>
 #include <random>
-#include <stop_token>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -289,21 +288,34 @@ int run(xonix::Size board) {
     const Component root = ui.root();
 
     // The ticker only wakes the UI thread; it never touches game state.
+    // std::thread rather than std::jthread: Apple's libc++ (Xcode 16) lacks jthread/stop_token by default.
     std::mutex mutex;
-    std::condition_variable_any wake;
-    std::jthread ticker([&](std::stop_token stop) {
+    std::condition_variable wake;
+    bool stop = false;  // guarded by mutex
+    std::thread ticker([&] {
         std::unique_lock lock(mutex);
-        while (!wake.wait_for(lock, stop, frame_interval, [&stop] { return stop.stop_requested(); })) {
+        while (!wake.wait_for(lock, frame_interval, [&stop] { return stop; })) {
             app.PostEvent(Event::Custom);
         }
     });
+    // Stop and join the ticker before the App goes away, so nothing is posted to a dead App.
+    // Also on an exception: destroying a joinable std::thread would terminate the program.
+    const auto stop_ticker = [&] {
+        {
+            const std::lock_guard lock(mutex);
+            stop = true;
+        }
+        wake.notify_all();
+        ticker.join();
+    };
 
-    app.Loop(root);
-
-    // Stop the ticker before the App goes away, so nothing is posted to a dead App.
-    ticker.request_stop();
-    wake.notify_all();
-    ticker.join();
+    try {
+        app.Loop(root);
+    } catch (...) {
+        stop_ticker();
+        throw;
+    }
+    stop_ticker();
     return 0;
 }
 

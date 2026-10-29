@@ -50,7 +50,8 @@ jobs:
 
       - name: Install Clang 19
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-19
+        # libclang-rt-19-dev provides the ASan/UBSan runtimes for the sanitize preset.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends clang-19 libclang-rt-19-dev
 
       - name: Configure
         run: cmake --preset ${{ matrix.preset }} ${{ matrix.cmake_args }}

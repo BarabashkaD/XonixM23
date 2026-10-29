@@ -20,7 +20,7 @@ C++23, FTXUI, CMake, Clang; Windows, Linux, macOS
 
 - **Windows:** Clang (LLVM), CMake 3.25 or newer, Ninja, and Visual Studio Build Tools (MSVC STL and Windows SDK). `clang++` finds them without a developer prompt.
 - **Linux:** Clang 19 or newer with libstdc++ 13 or newer (tested with libstdc++ 14), CMake 3.25 or newer, Ninja, and Git. If the default `clang++` is older, add `-DCMAKE_CXX_COMPILER=clang++-19` (or newer) to the configure command: `cmake --preset release -DCMAKE_CXX_COMPILER=clang++-19`.
-- **macOS:** Apple Clang 16+ (Xcode 16) or Homebrew LLVM 19+, CMake 3.25 or newer, and Ninja. Expected to work; untested.
+- **macOS:** Xcode 16.4 (Apple Clang 17) or newer, CMake 3.25 or newer, and Ninja. Built and tested in CI only.
 - All platforms need network access on the first configure, because FTXUI v7.0.3 is fetched then.
 
 ### Build, test, run
@@ -109,7 +109,7 @@ XonixM23 is a new, independently written implementation inspired by this traditi
 |---|---|---|
 | Windows 11, Windows Terminal | Tested: all three presets build, `ctest` passes, manual smoke test passed (name entry, capture, death and respawn, pause, resize, level progression, game over and restart, quit) | Clang 23.1.4 (`x86_64-pc-windows-msvc`), MSVC STL 14.51 (VS Build Tools 2026, 18.11), Windows SDK 10.0.26100, CMake 4.3.2, Ninja 1.13.2. `clang++` found the STL and SDK without a developer prompt. |
 | Linux (Ubuntu 24.04.5 LTS under WSL2, not bare-metal Linux) | Tested: `debug`, `release` and `sanitize` (ASan + UBSan) build with no warnings and `ctest` passes. Short interactive check in Windows Terminal through WSL: name entry, capture, resize auto-pause and resume state, quit. `--width 19` exits with code 2 and `--help` with 0. | Clang 19.1.1, libstdc++ 14, CMake 3.28.3, Ninja 1.11.1. `<format>` is used, which needs libstdc++ 13 or newer. |
-| macOS | Untested | Expected, not verified: Apple Clang 16+ (Xcode 16) or Homebrew LLVM 19+. |
+| macOS 15 (GitHub-hosted arm64 runner) | CI only: the `release` preset builds and `ctest` passes. Not run interactively. | AppleClang 17.0.0 (Xcode 16.4). |
 
 ### Known limitations
 
@@ -117,7 +117,7 @@ XonixM23 is a new, independently written implementation inspired by this traditi
 - Terminals report no key-release events, so movement is continuous instead of hold-to-move.
 - An enemy in a corridor one cell wide cannot move diagonally and stays put.
 - The board is not scaled to the terminal; the terminal must fit the board plus two rows and the widest status line (see Quick start).
-- Only macOS is untested. Linux was tested only under WSL2, not on bare-metal Linux.
+- macOS is only built and tested in CI; the game has not been run interactively on a Mac. Linux was tested interactively only under WSL2, not on bare-metal Linux.
 
 ## How this project was made
 
