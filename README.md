@@ -1,5 +1,7 @@
 # XonixM23 — Modern C++23
 
+[![CI](https://github.com/BarabashkaD/XonixM23/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BarabashkaD/XonixM23/actions/workflows/ci.yml)
+
 A small terminal territory-capture game: draw trails across the board, enclose area away from the enemies, and clear each level. It is a noncommercial project for learning and testing modern C++.
 
 C++23, FTXUI, CMake, Clang; Windows, Linux, macOS
